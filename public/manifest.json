@@ -1,0 +1,25 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Messenger MVP",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "mess",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "/",
+  "description": "просто тест",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
