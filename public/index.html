@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messenger MVP</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Экран входа */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .loginCard {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+
+    .loginCard h1 {
+      margin: 0 0 8px;
+      text-align: center;
+    }
+
+    .loginCard p {
+      margin: 0 0 24px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+    }
+
+    .primary {
+      width: 100%;
+      margin-top: 10px;
+      background: #2563eb;
+      color: white;
+    }
+
+    .error {
+      min-height: 22px;
+      margin-top: 12px;
+      text-align: center;
+      color: #dc2626;
+    }
+
+    /* Основное приложение */
+    #app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: #111827;
+      color: white;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .currentUser {
+      margin-top: 3px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .logout {
+      background: #374151;
+      color: white;
+    }
+
+    .content {
+      flex: 1;
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .content h2 {
+      margin-top: 0;
+    }
+
+    /* Результаты поиска */
+    .userItem {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      padding: 12px;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+    }
+
+    /* Чат */
+    #chatScreen {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chatHeader {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .back {
+      background: #f3f4f6;
+      font-size: 20px;
+    }
+
+    .chatTitle {
+      font-weight: bold;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .messageRow {
+      display: flex;
+      margin-bottom: 8px;
+    }
+
+    .messageRow.mine {
+      justify-content: flex-end;
+    }
+
+    .messageBubble {
+      max-width: 80%;
+      padding: 10px 13px;
+      border-radius: 15px;
+      background: white;
+      overflow-wrap: anywhere;
+    }
+
+    .messageRow.mine .messageBubble {
+      background: #2563eb;
+      color: white;
+    }
+
+    .messageTime {
+      margin-top: 4px;
+      font-size: 10px;
+      opacity: .6;
+      text-align: right;
+    }
+
+    .messageForm {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .messageForm input {
+      flex: 1;
+    }
+
+    .send {
+      background: #2563eb;
+      color: white;
+    }
+
+    @media (max-width: 600px) {
+      .content {
+        padding: 15px;
+      }
+
+      .messageBubble {
+        max-width: 88%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Вход -->
+  <section id="loginScreen">
+    <div class="loginCard">
+      <h1>Messenger</h1>
+      <p>Введите username для входа</p>
+
+      <input
+        id="usernameInput"
+        type="text"
+        maxlength="20"
+        placeholder="Например: alex"
+        autocomplete="off"
+      >
+
+      <button id="loginButton" class="button primary">
+        Войти / зарегистрироваться
+      </button>
+
+      <div id="loginError" class="error"></div>
+    </div>
+  </section>
+
+
+  <!-- Приложение -->
+  <section id="app" class="hidden">
+
+    <header class="header">
+      <div>
+        <div class="title">Messenger</div>
+        <div id="currentUser" class="currentUser"></div>
+      </div>
+
+      <button id="logoutButton" class="button logout">
+        Выйти
+      </button>
+    </header>
+
+
+    <!-- Главный экран -->
+    <main id="homeScreen" class="content">
+      <h2>Найти пользователя</h2>
+
+      <input
+        id="searchInput"
+        type="text"
+        maxlength="20"
+        placeholder="Введите username"
+        autocomplete="off"
+      >
+
+      <div id="searchResults"></div>
+    </main>
+
+
+    <!-- Чат -->
+    <section id="chatScreen" class="hidden">
+
+      <div class="chatHeader">
+        <button id="backButton" class="button back">
+          ←
+        </button>
+
+        <div id="chatTitle" class="chatTitle"></div>
+      </div>
+
+      <div id="messages"></div>
+
+      <form id="messageForm" class="messageForm">
+        <input
+          id="messageInput"
+          type="text"
+          maxlength="2000"
+          placeholder="Сообщение..."
+          autocomplete="off"
+        >
+
+        <button type="submit" class="button send">
+          Отправить
+        </button>
+      </form>
+
+    </section>
+
+  </section>
+
+
+  <!-- Socket.io-клиент -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    // ------------------------------------------
+    // Состояние приложения
+    // ------------------------------------------
+
+    let currentUsername = null;
+    let currentChatUsername = null;
+    let socket = null;
+
+    // ------------------------------------------
+    // Элементы интерфейса
+    // ------------------------------------------
+
+    const loginScreen = document.getElementById("loginScreen");
+    const app = document.getElementById("app");
+
+    const usernameInput =
+      document.getElementById("usernameInput");
+
+    const loginButton =
+      document.getElementById("loginButton");
+
+    const loginError =
+      document.getElementById("loginError");
+
+    const currentUser =
+      document.getElementById("currentUser");
+
+    const logoutButton =
+      document.getElementById("logoutButton");
+
+    const homeScreen =
+      document.getElementById("homeScreen");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    const searchResults =
+      document.getElementById("searchResults");
+
+    const chatScreen =
+      document.getElementById("chatScreen");
+
+    const backButton =
+      document.getElementById("backButton");
+
+    const chatTitle =
+      document.getElementById("chatTitle");
+
+    const messages =
+      document.getElementById("messages");
+
+    const messageForm =
+      document.getElementById("messageForm");
+
+    const messageInput =
+      document.getElementById("messageInput");
+
+
+    // ------------------------------------------
+    // Регистрация / вход
+    // ------------------------------------------
+
+    loginButton.addEventListener("click", async () => {
+      const username = usernameInput.value.trim().toLowerCase();
+
+      if (!username) {
+        loginError.textContent = "Введите username.";
+        return;
+      }
+
+      loginError.textContent = "";
+
+      // Сначала пытаемся зарегистрировать.
+      const registerResponse = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username })
+      });
+
+      // Если пользователь уже существует,
+      // это нормально: просто продолжаем вход.
+      if (!registerResponse.ok && registerResponse.status !== 409) {
+        const data = await registerResponse.json();
+        loginError.textContent =
+          data.error || "Ошибка регистрации.";
+        return;
+      }
+
+      enterApplication(username);
+    });
+
+
+    function enterApplication(username) {
+      currentUsername = username;
+
+      loginScreen.classList.add("hidden");
+      app.classList.remove("hidden");
+
+      currentUser.textContent = `@${username}`;
+
+      socket = io();
+
+      socket.on("connect", () => {
+        socket.emit("login", username);
+      });
+
+      socket.on("new_message", (message) => {
+        // Показываем сообщение только если открыт
+        // соответствующий чат.
+        if (
+          currentChatUsername &&
+          (
+            (
+              message.from === currentUsername &&
+              message.to === currentChatUsername
+            ) ||
+            (
+              message.from === currentChatUsername &&
+              message.to === currentUsername
+            )
+          )
+        ) {
+          renderMessage(message);
+        }
+      });
+
+      socket.on("server_error", (data) => {
+        alert(data.error);
+      });
+    }
+
+
+    // ------------------------------------------
+    // Поиск пользователей
+    // ------------------------------------------
+
+    let searchTimeout = null;
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimeout);
+
+      searchTimeout = setTimeout(
+        searchUsers,
+        200
+      );
+    });
+
+
+    async function searchUsers() {
+      const query = searchInput.value.trim();
+
+      searchResults.innerHTML = "";
+
+      if (!query) {
+        return;
+      }
+
+      const response = await fetch(
+        `/api/users/search?username=${encodeURIComponent(query)}`
+      );
+
+      const data = await response.json();
+
+      if (data.users.length === 0) {
+        searchResults.innerHTML =
+          "<p>Пользователь не найден.</p>";
+        return;
+      }
+
+      data.users
+        .filter((user) => user.username !== currentUsername)
+        .forEach((user) => {
+
+          const item = document.createElement("div");
+          item.className = "userItem";
+
+          const avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.textContent =
+            user.username.charAt(0).toUpperCase();
+
+          const name = document.createElement("div");
+          name.textContent = `@${user.username}`;
+
+          item.appendChild(avatar);
+          item.appendChild(name);
+
+          item.addEventListener("click", () => {
+            openChat(user.username);
+          });
+
+          searchResults.appendChild(item);
+        });
+    }
+
+
+    // ------------------------------------------
+    // Открытие чата
+    // ------------------------------------------
+
+    async function openChat(username) {
+      currentChatUsername = username;
+
+      homeScreen.classList.add("hidden");
+      chatScreen.classList.remove("hidden");
+
+      chatTitle.textContent = `@${username}`;
+      messages.innerHTML = "";
+
+      const response = await fetch(
+        `/api/messages/${encodeURIComponent(currentUsername)}/${encodeURIComponent(username)}`
+      );
+
+      const data = await response.json();
+
+      data.messages.forEach(renderMessage);
+
+      scrollToBottom();
+
+      messageInput.focus();
+    }
+
+
+    // ------------------------------------------
+    // Отображение сообщения
+    // ------------------------------------------
+
+    function renderMessage(message) {
+      // Защита от повторного отображения.
+      if (
+        document.querySelector(
+          `[data-message-id="${message.id}"]`
+        )
+      ) {
+        return;
+      }
+
+      const row = document.createElement("div");
+
+      row.className =
+        message.from === currentUsername
+          ? "messageRow mine"
+          : "messageRow";
+
+      row.dataset.messageId = message.id;
+
+      const bubble = document.createElement("div");
+      bubble.className = "messageBubble";
+
+      // textContent безопаснее innerHTML для текста пользователя.
+      const text = document.createElement("div");
+      text.textContent = message.text;
+
+      const time = document.createElement("div");
+      time.className = "messageTime";
+      time.textContent = new Date(
+        message.createdAt
+      ).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      bubble.appendChild(text);
+      bubble.appendChild(time);
+
+      row.appendChild(bubble);
+      messages.appendChild(row);
+
+      scrollToBottom();
+    }
+
+
+    function scrollToBottom() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+
+    // ------------------------------------------
+    // Отправка сообщения
+    // ------------------------------------------
+
+    messageForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const text = messageInput.value.trim();
+
+      if (!text || !currentChatUsername) {
+        return;
+      }
+
+      if (!socket || !socket.connected) {
+        alert("Нет соединения с сервером.");
+        return;
+      }
+
+      socket.emit("send_message", {
+        to: currentChatUsername,
+        text
+      });
+
+      messageInput.value = "";
+      messageInput.focus();
+    });
+
+
+    // ------------------------------------------
+    // Назад из чата
+    // ------------------------------------------
+
+    backButton.addEventListener("click", () => {
+      currentChatUsername = null;
+
+      chatScreen.classList.add("hidden");
+      homeScreen.classList.remove("hidden");
+
+      searchInput.focus();
+    });
+
+
+    // ------------------------------------------
+    // Выход
+    // ------------------------------------------
+
+    logoutButton.addEventListener("click", () => {
+      if (socket) {
+        socket.disconnect();
+      }
+
+      socket = null;
+      currentUsername = null;
+      currentChatUsername = null;
+
+      app.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+
+      usernameInput.value = "";
+      searchInput.value = "";
+      searchResults.innerHTML = "";
+    });
+
+
+    // Enter в поле username тоже выполняет вход.
+    usernameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        loginButton.click();
+      }
+    });
+  </script>
+
+</body>
+</html>
